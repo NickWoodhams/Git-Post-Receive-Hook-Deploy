@@ -122,7 +122,7 @@ def create_app():
     if form.validate_on_submit():
         application = Application()
         form.populate_obj(application)
-        if not Application.query.filter_by(name=field.data).count():
+        if not Application.query.filter_by(name=form.name.data).count():
             db.session.add(application)
             db.session.commit()
             flash('Successfully created.', 'success')
