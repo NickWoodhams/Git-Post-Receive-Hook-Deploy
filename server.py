@@ -10,8 +10,10 @@ import json
 import datetime
 
 from pprint import pprint
+from netaddr import IPNetwork, IPAddress
+from subprocess import Popen, PIPE, STDOUT
 
-from flask import Flask, request, render_template, flash
+from flask import Flask, request, render_template, flash, jsonify
 from flask.ext.wtf import Form
 from wtforms import TextField, PasswordField, validators, TextAreaField, SelectField, SelectMultipleField, HiddenField, RadioField, BooleanField, FileField
 from wtforms.validators import DataRequired, ValidationError, Required, Optional
@@ -69,6 +71,7 @@ class Application(db.Model):
 # Setup Flask-Security
 user_datastore = SQLAlchemyUserDatastore(db, User, Role)
 security = Security(app, user_datastore)
+# app.config['SECURITY_LOGIN_USER_TEMPLATE'] = 'templates/login.html'
 
 # Create first user
 # user_datastore.create_user(email='nicholas.woodhams@gmail.com', password='super-secure-password')
@@ -77,7 +80,7 @@ security = Security(app, user_datastore)
 
 # Create/Edit App Form
 class createEditApp(Form):
-    name = TextField('Repository Name', [Required()], description="Must be exactly as it appears on GitHub or BitBucket.")
+    name = TextField('Repository Name', [Required()],description="Must be exactly as it appears on GitHub or BitBucket.")
     branch = TextField('Branch Name', [Required()], description="Watch this branch for updates and pull changes.")
     basepath = TextField('Absolute Base Path', [Required()], description="Base path is the location of your application on the server. This is the root of your repository. Must be an absolute path.")
     touchpath = TextField('Touch this File Path', [Optional()], description="This file will be touched after the webhook is executed.")
@@ -85,7 +88,25 @@ class createEditApp(Form):
     disabled = BooleanField('Disable this hook?', [Optional()])
 
 
-@app.route("/")
+whitelist_ip_blocks = [
+    '207.97.227.224/27',  # github
+    '173.203.140.192/27',  # github
+    '204.232.175.64/27',  # github
+    '72.4.117.96/27',  # github
+    '192.30.252.0/22',  # github
+    '207.223.240.187',  # bitbucket
+    '207.223.240.188',  # bitbucket
+]
+
+
+def ip_allowed(ip_address):
+    for ip_block in whitelist_ip_blocks:
+        if IPAddress(ip_address) in IPNetwork(ip_block):
+            return True
+    return True
+
+
+@app.route("/", methods=['POST', 'GET'])
 @login_required
 def index():
     apps = Application.query.all()
@@ -97,10 +118,10 @@ def index():
 def create_app():
     form = createEditApp()
     if form.validate_on_submit():
-        app = Application()
-        form.populate_obj(app)
+        application = Application()
+        form.populate_obj(application)
         if not Application.query.filter_by(name=field.data).count():
-            db.session.add(app)
+            db.session.add(application)
             db.session.commit()
             flash('Successfully created.', 'success')
         else:
@@ -111,10 +132,10 @@ def create_app():
 @app.route("/edit/<application_id>", methods=['POST', 'GET'])
 @login_required
 def edit_app(application_id):
-    app = Application.query.get_or_404(application_id)
-    form = createEditApp(obj=app)
+    application = Application.query.get_or_404(application_id)
+    form = createEditApp(obj=application)
     if form.validate_on_submit():
-        form.populate_obj(app)
+        form.populate_obj(application)
         db.session.commit()
         flash('Successfully updated.', 'success')
     return render_template('create-edit.html', form=form)
@@ -122,10 +143,23 @@ def edit_app(application_id):
 
 @app.route("/deploy", methods=['POST'])
 def autodeploy():
-    payload = json.loads(request.form['payload'])
-    repo = payload['repository']
-    pprint(repo)
-    return "yay"
+    if ip_allowed(request.remote_addr):
+        payload = json.loads(request.form['payload'])
+        repo = payload['repository']
+        pprint(repo)
+        application = Application.query.filter_by(name=repo['name']).first()
+        if application:
+            # Overwrite all files with current Git Version
+            Popen('cd %s' % application.basepath, shell=True)
+            # Popen('git fetch --all', shell=True)
+            # Popen('git reset --hard origin/%s' % application.branch, shell=True)
+            if application.touchpath:
+                Popen('touch %s' % application.touchpath, shell=True)
+            if application.scriptpath:
+                Popen('bash %s' % application.scriptpath, shell=True)
+            return jsonify(status='Post-receive hook for %s triggered.' % repo['name'])
+    else:
+        return jsonify(status='Bad IP source address. Only GitHub and BitBucket IP addresses allowed. Check "whitelist_ip_blocks."')
 
 
 if __name__ == "__main__":
