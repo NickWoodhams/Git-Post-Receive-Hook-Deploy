@@ -28,7 +28,7 @@ app.config['SECRET_KEY'] = 'the-red-skittles-are-my-favorite'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///db.sql'
 app.config['admin_email'] = 'nicholas.woodhams@gmail.com'
 app.config['admin_password'] = 'super-secret-password'
-app.debug = False  # MUST BE FALSE FOR PRODUCTION!!
+app.debug = True  # MUST BE FALSE FOR PRODUCTION!!
 
 
 #create db instance
