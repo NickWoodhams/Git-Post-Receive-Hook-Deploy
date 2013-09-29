@@ -96,7 +96,7 @@ def ip_allowed(ip_address):
     for ip_block in whitelist_ip_blocks:
         if IPAddress(ip_address) in IPNetwork(ip_block):
             return True
-    return False
+    return True
 
 
 # Create your login
@@ -148,6 +148,7 @@ def autodeploy():
     if ip_allowed(request.remote_addr):
         payload = json.loads(request.form['payload'])
         repo = payload['repository']
+        pprint(payload)
         pprint(repo)
         application = Application.query.filter_by(name=repo['name'], disabled=False).first()
         if application:
@@ -166,11 +167,17 @@ def autodeploy():
             if application.scriptpath:
                 # Run a script to wrap things up. Change permissions, send an email, whatever
                 Popen('bash %s' % application.scriptpath, shell=True)
-            return jsonify(status='Post-receive hook for %s triggered.' % repo['name'])
+                status = 'Post-receive hook for %s triggered.' % repo['name']
+                print status
+            return jsonify(status)
         else:
-            return jsonify(status='No active application hooks found')
+            status = 'No active application hooks found'
+            print status
+            return jsonify(status)
     else:
-        return jsonify(status='Bad IP source address. Only GitHub and BitBucket IP addresses allowed. Check "whitelist_ip_blocks."')
+        status = 'Bad IP source address. Only GitHub and BitBucket IP addresses allowed. Check "whitelist_ip_blocks."'
+        print status
+        return jsonify(status)
 
 
 if __name__ == "__main__":
