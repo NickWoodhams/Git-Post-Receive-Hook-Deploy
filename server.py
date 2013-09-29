@@ -9,6 +9,8 @@
 import json
 import datetime
 
+from pprint import pprint
+
 from flask import Flask, request, render_template, flash
 from flask.ext.wtf import Form
 from wtforms import TextField, PasswordField, validators, TextAreaField, SelectField, SelectMultipleField, HiddenField, RadioField, BooleanField, FileField
@@ -16,8 +18,6 @@ from wtforms.validators import DataRequired, ValidationError, Required, Optional
 from flask.ext.sqlalchemy import SQLAlchemy
 from flask.ext.security import Security, SQLAlchemyUserDatastore, \
     UserMixin, RoleMixin, login_required
-
-from pprint import pprint
 
 
 # Create App
@@ -70,6 +70,10 @@ class Application(db.Model):
 user_datastore = SQLAlchemyUserDatastore(db, User, Role)
 security = Security(app, user_datastore)
 
+# Create first user
+# user_datastore.create_user(email='nicholas.woodhams@gmail.com', password='makem0ney')
+# db.session.commit()
+
 
 # Create/Edit App Form
 class createEditApp(Form):
@@ -80,40 +84,32 @@ class createEditApp(Form):
     scriptpath = TextField('Execute this Bash Script Path', [Optional()], description="This bash script will be executed after all other tasks are complete.")
     disabled = BooleanField('Disable this hook?', [Optional()])
 
-    # def validate_name(form, field):
-    #     #check to make sure username is unique
-    #     if Application.query.filter_by(name=field.data).count():
-    #         raise ValidationError('Repository already exists')
-
-# Create first user
-# user_datastore.create_user(email='nicholas.woodhams@gmail.com', password='makem0ney')
-# db.session.commit()
-
-#model
-#repo name-req
-#application base dir-req (git checkout)
-#uwsgi app location- optional, touch only if set
-#script to execute-optional, run bash script
 
 @app.route("/")
+@login_required
 def index():
     apps = Application.query.all()
     return render_template('index.html', apps=apps)
 
 
 @app.route("/create", methods=['POST', 'GET'])
+@login_required
 def create_app():
     form = createEditApp()
     if form.validate_on_submit():
         app = Application()
         form.populate_obj(app)
-        db.session.add(app)
-        db.session.commit()
-        flash('Successfully created.', 'success')
+        if not Application.query.filter_by(name=field.data).count():
+            db.session.add(app)
+            db.session.commit()
+            flash('Successfully created.', 'success')
+        else:
+            flash('That repository name already exists!', 'error')
     return render_template('create-edit.html', form=form)
 
 
 @app.route("/edit/<application_id>", methods=['POST', 'GET'])
+@login_required
 def edit_app(application_id):
     app = Application.query.get_or_404(application_id)
     form = createEditApp(obj=app)
@@ -132,10 +128,24 @@ def autodeploy():
     return "yay"
 
 
-@app.route("/admin")
-@login_required
-def admin():
-    return "yay"
-
 if __name__ == "__main__":
     app.run('0.0.0.0', port=9340)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
