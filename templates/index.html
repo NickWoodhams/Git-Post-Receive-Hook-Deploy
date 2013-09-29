@@ -1,48 +1,17 @@
-{% from "macros/forms.html" import form_field, form_fields, form_field_bare %}
-<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Github Post-Receive Hook App">
-    <meta name="author" content="nicholas.woodhams@gmail.com">
-
-    <title>{% block title %}App Deployer{% endblock title %}</title>
-
-    <!-- Bootstrap core CSS -->
-    <link href="/static/css/bootstrap.css" rel="stylesheet">
-
-    <!-- Custom styles for this template -->
-    <link href="/static/css/styles.css" rel="stylesheet">
-  </head>
-
-  <body>
-
-    <!-- Wrap all page content here -->
-    <div id="wrap">
-
-      <!-- Begin page content -->
-      <div class="container">
-        <div class="page-header">
-          <h1>{{ self.title() }}</h1>
-        </div>
-        <p class="lead">Update your application deployment settings, post github update</p>
-        <p></p>
-        {{ form_fields(form, name='addEditForm', button='Create App') }}
-      </div>
+{% extends 'layout.html' %}
+{% block body %}
+<!-- Begin page content -->
+  <div class="container">
+    <div class="page-header">
+    	<a class="btn btn-small btn-primary pull-right" href="{{ url_for('create_app') }}">Create app hook</a>
+      	<h1>{{ self.title() }}</h1>
     </div>
-
-    <div id="footer">
-      <div class="container">
-        <p class="text-muted credit">by <a href="https://github.com/nickwoodhams">nick woodhams</a></p>
-      </div>
+    <p class="lead">Update your application deployment settings, post github update</p>
+    <div class="apps">
+    	{% for app in apps %}
+    		<h3><a class="{% if app.disabled %}disabled{% endif %}" href="{{ url_for('edit_app', application_id=app.id) }}">{{ app.name }}</a></h3>
+    	{% endfor %}
     </div>
-
-
-    <!-- Bootstrap core JavaScript
-    ================================================== -->
-    <!-- Placed at the end of the document so the pages load faster -->
-    <script src="/static/js/bootstrap.min.js"></script>
-  </body>
-</html>
+  </div>
+</div>
+{% endblock %}

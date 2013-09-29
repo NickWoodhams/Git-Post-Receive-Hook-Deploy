@@ -9,7 +9,7 @@
 import json
 import datetime
 
-from flask import Flask, request, render_template
+from flask import Flask, request, render_template, flash
 from flask.ext.wtf import Form
 from wtforms import TextField, PasswordField, validators, TextAreaField, SelectField, SelectMultipleField, HiddenField, RadioField, BooleanField, FileField
 from wtforms.validators import DataRequired, ValidationError, Required, Optional
@@ -62,6 +62,7 @@ class Application(db.Model):
     basepath = db.Column(db.String(255))
     touchpath = db.Column(db.String(255))
     scriptpath = db.Column(db.String(255))
+    disabled = db.Column(db.Boolean, default=False)
     created_at = db.Column(db.DateTime, default=datetime.datetime.now())
 
 
@@ -75,8 +76,14 @@ class createEditApp(Form):
     name = TextField('Repository Name', [Required()], description="Must be exactly as it appears on GitHub or BitBucket.")
     branch = TextField('Branch Name', [Required()], description="Watch this branch for updates and pull changes.")
     basepath = TextField('Absolute Base Path', [Required()], description="Base path is the location of your application on the server. This is the root of your repository. Must be an absolute path.")
-    touchpath = TextField('Touch this File Path', [Required()], description="This file will be touched after the webhook is executed.")
-    scriptpath = TextField('Execute this Bash Script Path', [Required()], description="This bash script will be executed after all other tasks are complete.")
+    touchpath = TextField('Touch this File Path', [Optional()], description="This file will be touched after the webhook is executed.")
+    scriptpath = TextField('Execute this Bash Script Path', [Optional()], description="This bash script will be executed after all other tasks are complete.")
+    disabled = BooleanField('Disable this hook?', [Optional()])
+
+    # def validate_name(form, field):
+    #     #check to make sure username is unique
+    #     if Application.query.filter_by(name=field.data).count():
+    #         raise ValidationError('Repository already exists')
 
 # Create first user
 # user_datastore.create_user(email='nicholas.woodhams@gmail.com', password='makem0ney')
@@ -90,8 +97,31 @@ class createEditApp(Form):
 
 @app.route("/")
 def index():
+    apps = Application.query.all()
+    return render_template('index.html', apps=apps)
+
+
+@app.route("/create", methods=['POST', 'GET'])
+def create_app():
     form = createEditApp()
-    return render_template('index.html', form=form)
+    if form.validate_on_submit():
+        app = Application()
+        form.populate_obj(app)
+        db.session.add(app)
+        db.session.commit()
+        flash('Successfully created.', 'success')
+    return render_template('create-edit.html', form=form)
+
+
+@app.route("/edit/<application_id>", methods=['POST', 'GET'])
+def edit_app(application_id):
+    app = Application.query.get_or_404(application_id)
+    form = createEditApp(obj=app)
+    if form.validate_on_submit():
+        form.populate_obj(app)
+        db.session.commit()
+        flash('Successfully updated.', 'success')
+    return render_template('create-edit.html', form=form)
 
 
 @app.route("/deploy", methods=['POST'])

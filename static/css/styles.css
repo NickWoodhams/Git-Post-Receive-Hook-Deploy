@@ -34,3 +34,12 @@ body {
 .container .credit {
   margin: 20px 0;
 }
+form {
+  padding-bottom: 2em;
+}
+.disabled {
+  color: #CCC;
+}
+.disabled:hover {
+  color: #CCC;
+}

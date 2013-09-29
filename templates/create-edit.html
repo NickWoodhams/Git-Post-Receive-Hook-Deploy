@@ -1,0 +1,14 @@
+{% extends 'layout.html' %}
+{% block body %}
+<!-- Begin page content -->
+  <div class="container">
+    <div class="page-header">
+    	<a class="btn btn-small btn-primary pull-right" href="{{ url_for('index') }}">Home</a>
+      	<h1>{{ self.title() }}</h1>
+    </div>
+    <p class="lead">Update your application deployment settings, post github update</p>
+    <p></p>
+    {{ form_fields(form, name='addEditForm', button='Save App Hook') }}
+  </div>
+</div>
+{% endblock %}
