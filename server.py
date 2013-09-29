@@ -103,8 +103,8 @@ def ip_allowed(ip_address):
 @app.before_first_request
 def create_user():
     db.create_all()
-    user_datastore.create_user(email=app.config['admin_email'], password=app.config['admin_password'])
-    if not User.query.filter_by(email=app.config['admin_email']).count():
+    user_datastore.create_user(email=app.config['ADMIN_EMAIL'], password=app.config['ADMIN_PASSWORD'])
+    if not User.query.filter_by(email=app.config['ADMIN_EMAIL']).count():
         db.session.commit()
 
 
