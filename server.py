@@ -24,11 +24,7 @@ from flask.ext.security import Security, SQLAlchemyUserDatastore, \
 
 # Create App
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'the-red-skittles-are-my-favorite'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///db.sql'
-app.config['admin_email'] = 'nicholas.woodhams@gmail.com'
-app.config['admin_password'] = 'super-secret-password'
-app.debug = True  # MUST BE FALSE FOR PRODUCTION!!
+app.config.from_pyfile('settings.cfg', silent=False)
 
 
 #create db instance
@@ -107,8 +103,8 @@ def ip_allowed(ip_address):
 @app.before_first_request
 def create_user():
     db.create_all()
-    user_datastore.create_user(email=app.config['admin_email'], password=app.config['admin_password'])
-    if not User.query.filter_by(email=app.config['admin_email']).count():
+    user_datastore.create_user(email=config['admin_email'], password=app.config['admin_password'])
+    if not User.query.filter_by(email=config['admin_email']).count():
         db.session.commit()
 
 
