@@ -71,7 +71,7 @@ user_datastore = SQLAlchemyUserDatastore(db, User, Role)
 security = Security(app, user_datastore)
 
 # Create first user
-# user_datastore.create_user(email='nicholas.woodhams@gmail.com', password='makem0ney')
+# user_datastore.create_user(email='nicholas.woodhams@gmail.com', password='super-secure-password')
 # db.session.commit()
 
 
