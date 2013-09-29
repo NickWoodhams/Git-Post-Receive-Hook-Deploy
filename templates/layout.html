@@ -34,11 +34,14 @@
             {% endfor %}
         {% endif %}
     {% endwith %}
-
-
-    {% block body %}{% endblock body %}
-
-    
+    {% if current_user.is_authenticated() %}
+    <div class="container relative">
+      <a class="logout" href="/logout">Logout</a>
+    </div>
+    {% endif %}
+    {% block body %}
+    {% endblock body %}
+    </div>
     <div id="footer">
       <div class="container">
         <p class="text-muted credit">by <a href="https://github.com/nickwoodhams">nick woodhams</a></p>

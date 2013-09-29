@@ -26,7 +26,7 @@ from flask.ext.security import Security, SQLAlchemyUserDatastore, \
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'the-red-skittles-are-my-favorite'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///db.sql'
-app.debug = True
+app.debug = False
 
 
 #create db instance
@@ -103,7 +103,7 @@ def ip_allowed(ip_address):
     for ip_block in whitelist_ip_blocks:
         if IPAddress(ip_address) in IPNetwork(ip_block):
             return True
-    return True
+    return False
 
 
 @app.route("/", methods=['POST', 'GET'])
@@ -147,39 +147,29 @@ def autodeploy():
         payload = json.loads(request.form['payload'])
         repo = payload['repository']
         pprint(repo)
-        application = Application.query.filter_by(name=repo['name']).first()
+        application = Application.query.filter_by(name=repo['name'], disabled=False).first()
         if application:
             # Overwrite all files with current Git Version
-            Popen('cd %s' % application.basepath, shell=True)
-            # Popen('git fetch --all', shell=True)
-            # Popen('git reset --hard origin/%s' % application.branch, shell=True)
+            command = '''
+                cd %s
+                git fetch --all
+                git reset --hard origin/%s
+            ''' % (application.basepath, application.branch)
+            Popen(command, shell=True)
+
+            # Run optional commands if they are set
             if application.touchpath:
+                # Ex. touch /etc/uwsgi/application.ini will restart your UWSGI workers
                 Popen('touch %s' % application.touchpath, shell=True)
             if application.scriptpath:
+                # Run a script to wrap things up. Change permissions, send an email, whatever
                 Popen('bash %s' % application.scriptpath, shell=True)
             return jsonify(status='Post-receive hook for %s triggered.' % repo['name'])
+        else:
+            return jsonify(status='No active application hooks found')
     else:
         return jsonify(status='Bad IP source address. Only GitHub and BitBucket IP addresses allowed. Check "whitelist_ip_blocks."')
 
 
 if __name__ == "__main__":
     app.run('0.0.0.0', port=9340)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
