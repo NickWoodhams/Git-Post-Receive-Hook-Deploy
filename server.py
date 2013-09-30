@@ -148,9 +148,18 @@ def edit_app(application_id):
 def autodeploy():
     if ip_allowed(request.remote_addr):
         payload = json.loads(request.form['payload'])
-        repo = payload['repository']
-        name = repo['name']
-        branch = basename(payload['ref'])
+        pprint(payload)
+
+        if payload.get('canon_url') == 'https://bitbucket.org':
+            #bitbucket style
+            repo = payload['repository']
+            name = repo['name']
+            branch = payload['commits'][0]['branch']
+        else:
+            #github style
+            repo = payload['repository']
+            name = repo['name']
+            branch = basename(payload['ref'])
 
         application = Application.query.filter_by(name=name, branch=branch, disabled=False).first()
         if application:
