@@ -138,12 +138,9 @@ def edit_app(application_id):
     application = Application.query.get_or_404(application_id)
     form = createEditApp(obj=application)
     if form.validate_on_submit():
-        if not Application.query.filter_by(name=form.name.data, branch=form.branch.data).count():
-            form.populate_obj(application)
-            db.session.commit()
-            flash('Successfully updated.', 'success')
-        else:
-            flash('That repository name & branch already exists!', 'error')
+        form.populate_obj(application)
+        db.session.commit()
+        flash('Successfully updated.', 'success')
     return render_template('create-edit.html', form=form)
 
 
