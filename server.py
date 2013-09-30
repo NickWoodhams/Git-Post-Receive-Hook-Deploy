@@ -10,6 +10,7 @@ import json
 import datetime
 
 from pprint import pprint
+from os.path import basename
 from netaddr import IPNetwork, IPAddress
 from subprocess import Popen, PIPE, STDOUT
 
@@ -57,7 +58,7 @@ class User(db.Model, UserMixin):
 
 class Application(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(255), unique=True)
+    name = db.Column(db.String(255))
     branch = db.Column(db.String(255))
     basepath = db.Column(db.String(255))
     touchpath = db.Column(db.String(255))
@@ -122,12 +123,12 @@ def create_app():
     if form.validate_on_submit():
         application = Application()
         form.populate_obj(application)
-        if not Application.query.filter_by(name=form.name.data).count():
+        if not Application.query.filter_by(name=form.name.data, branch=form.branch.data).count():
             db.session.add(application)
             db.session.commit()
             flash('Successfully created.', 'success')
         else:
-            flash('That repository name already exists!', 'error')
+            flash('That repository name & branch already exists!', 'error')
     return render_template('create-edit.html', form=form)
 
 
@@ -137,9 +138,12 @@ def edit_app(application_id):
     application = Application.query.get_or_404(application_id)
     form = createEditApp(obj=application)
     if form.validate_on_submit():
-        form.populate_obj(application)
-        db.session.commit()
-        flash('Successfully updated.', 'success')
+        if not Application.query.filter_by(name=form.name.data, branch=form.branch.data).count():
+            form.populate_obj(application)
+            db.session.commit()
+            flash('Successfully updated.', 'success')
+        else:
+            flash('That repository name & branch already exists!', 'error')
     return render_template('create-edit.html', form=form)
 
 
@@ -148,9 +152,10 @@ def autodeploy():
     if ip_allowed(request.remote_addr):
         payload = json.loads(request.form['payload'])
         repo = payload['repository']
-        pprint(payload)
-        pprint(repo)
-        application = Application.query.filter_by(name=repo['name'], disabled=False).first()
+        name = repo['name']
+        branch = basename(payload['ref'])
+
+        application = Application.query.filter_by(name=name, branch=branch, disabled=False).first()
         if application:
             # Overwrite all files with current Git Version
             command = '''
@@ -164,20 +169,22 @@ def autodeploy():
             if application.touchpath:
                 # Ex. touch /etc/uwsgi/application.ini will restart your UWSGI workers
                 Popen('touch %s' % application.touchpath, shell=True)
+
             if application.scriptpath:
                 # Run a script to wrap things up. Change permissions, send an email, whatever
                 Popen('bash %s' % application.scriptpath, shell=True)
-                status = 'Post-receive hook for %s triggered.' % repo['name']
-                print status
-            return jsonify(status)
+
+            status = 'Post-receive hook for %s triggered.' % repo['name']
+            print status
+            return jsonify(status=status)
         else:
             status = 'No active application hooks found'
             print status
-            return jsonify(status)
+            return jsonify(status=status)
     else:
         status = 'Bad IP source address. Only GitHub and BitBucket IP addresses allowed. Check "whitelist_ip_blocks."'
         print status
-        return jsonify(status)
+        return jsonify(status=status)
 
 
 if __name__ == "__main__":

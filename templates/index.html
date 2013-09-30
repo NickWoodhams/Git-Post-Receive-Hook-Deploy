@@ -9,7 +9,7 @@
     <p class="lead">Update your application deployment settings, post github update</p>
     <div class="apps">
     	{% for app in apps %}
-    		<h3><a class="{% if app.disabled %}disabled{% endif %}" href="{{ url_for('edit_app', application_id=app.id) }}">{{ app.name }}</a></h3>
+    		<h3><a class="{% if app.disabled %}disabled{% endif %}" href="{{ url_for('edit_app', application_id=app.id) }}">{{ app.name }} - {{ app.branch }}</a></h3>
     	{% endfor %}
     </div>
   </div>
