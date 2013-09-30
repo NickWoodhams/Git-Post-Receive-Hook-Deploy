@@ -88,8 +88,8 @@ whitelist_ip_blocks = [
     '204.232.175.64/27',  # github
     '72.4.117.96/27',  # github
     '192.30.252.0/22',  # github
-    '207.223.240.187',  # bitbucket
-    '207.223.240.188',  # bitbucket
+    '131.103.20.165',  # bitbucket
+    '131.103.20.166',  # bitbucket
 ]
 
 
