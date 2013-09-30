@@ -97,7 +97,7 @@ def ip_allowed(ip_address):
     for ip_block in whitelist_ip_blocks:
         if IPAddress(ip_address) in IPNetwork(ip_block):
             return True
-    return True
+    return False
 
 
 # Create your login
