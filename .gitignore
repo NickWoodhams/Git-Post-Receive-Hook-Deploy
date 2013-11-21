@@ -1,5 +1,6 @@
 *.pyc
 db.sql
+database.sql
 venv
 alembic/versions/*
 settings.cfg
