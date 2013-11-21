@@ -1,4 +1,5 @@
 *.pyc
+hooks.db
 db.sql
 venv
 alembic/versions/*
