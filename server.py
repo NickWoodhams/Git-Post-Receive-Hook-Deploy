@@ -185,7 +185,7 @@ def autodeploy():
 
             if application.scriptpath:
                 # Run a script to wrap things up. Change permissions, send an email, whatever
-                Popen('bash %s' % application.scriptpath, preexec_fn=demote(1000), shell=True)
+                Popen('bash %s' % application.scriptpath, preexec_fn=demote(1000), stdout=PIPE, shell=True)
 
             status = 'Post-receive hook for %s triggered.' % repo['name']
             print status
