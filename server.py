@@ -6,6 +6,7 @@
     autodeploy applications when pushed to git
 """
 
+import os
 import json
 import datetime
 
@@ -100,6 +101,12 @@ def ip_allowed(ip_address):
     return False
 
 
+def demote(user_uid):
+    def result():
+        os.setuid(user_uid)
+    return result
+
+
 # Create your login
 @app.before_first_request
 def create_user():
@@ -178,7 +185,7 @@ def autodeploy():
 
             if application.scriptpath:
                 # Run a script to wrap things up. Change permissions, send an email, whatever
-                Popen('bash %s' % application.scriptpath, shell=True)
+                Popen('bash %s' % application.scriptpath, preexec_fn=demote(1000), shell=True)
 
             status = 'Post-receive hook for %s triggered.' % repo['name']
             print status
