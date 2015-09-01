@@ -25,10 +25,10 @@ from flask.ext.security import Security, SQLAlchemyUserDatastore, \
 
 # Create App
 app = Flask(__name__)
+app.debug = True
 app.config.from_pyfile('settings.cfg', silent=False)
 
-
-#create db instance
+# create db instance
 db = SQLAlchemy(app)
 
 
@@ -100,6 +100,13 @@ def ip_allowed(ip_address):
     return False
 
 
+def git_provider(ip_address):
+    if ip_address == '131.103.20.165' or ip_address == '131.103.20.166':
+        return "bitbucket"
+    else:
+        return "github"
+
+
 # Create your login
 @app.before_first_request
 def create_user():
@@ -147,16 +154,18 @@ def edit_app(application_id):
 @app.route("/deploy", methods=['POST'])
 def autodeploy():
     if ip_allowed(request.remote_addr):
-        payload = json.loads(request.form['payload'])
-        pprint(payload)
+        pprint(request.form)
+        pprint(request.json)
 
-        if payload.get('canon_url') == 'https://bitbucket.org':
-            #bitbucket style
+        payload = request.json
+
+        if git_provider(request.remote_addr) == 'bitbucket':
+            # bitbucket style
             repo = payload['repository']
             name = repo['name']
-            branch = payload['commits'][0]['branch']
+            branch = payload['push']['changes'][0]['new']['name']
         else:
-            #github style
+            # github style
             repo = payload['repository']
             name = repo['name']
             branch = basename(payload['ref'])
