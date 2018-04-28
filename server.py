@@ -153,6 +153,7 @@ def edit_app(application_id):
 
 @app.route("/deploy", methods=['POST'])
 def autodeploy():
+    print("Received message from %s" % request.remote_addr)
     if ip_allowed(request.remote_addr):
         pprint(request.form)
         pprint(request.json)
