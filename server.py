@@ -110,10 +110,16 @@ def git_provider(ip_address):
         return "github"
 
 
-def _get_digest(self):
+def match_signature(request_headers, request_data):
     """Return message digest if a secret key was provided"""
-    return hmac.new(
-        self._secret, request.data, hashlib.sha1).hexdigest() if self._secret else None
+    try:
+        signature = request.headers.get('X-Hub-Signature').split('=', 1)[0]
+        digest = hmac.new(app.config['GITHUB_HOOK_SECRET'], request.data, hashlib.sha1).hexdigest()
+        if signature == digest:
+            return True
+        return False
+    except:
+        return False
 
 
 # Create your login
@@ -163,14 +169,9 @@ def edit_app(application_id):
 @app.route("/deploy", methods=['POST'])
 def autodeploy():
     print("Received message from %s" % request.remote_addr)
-    pprint(request.json)
-    pprint(request.headers)
-    signature = request.headers.get('X-Hub-Signature').split('=', 1)[0]
-    digest = hmac.new(app.config['GITHUB_HOOK_SECRET'], request.data, hashlib.sha1).hexdigest()
-    print(digest)
-
-    if ip_allowed(request.remote_addr) or "secret" == app.config['GITHUB_HOOK_SECRET']:
+    if ip_allowed(request.remote_addr) or match_signature(request_headers=request.headers, request_data=request.data):
         pprint(request.form)
+        pprint(request.json)
 
         payload = request.json
 
