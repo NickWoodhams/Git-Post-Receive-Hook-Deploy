@@ -113,7 +113,7 @@ def git_provider(ip_address):
 def match_signature(request_headers, request_data, secret):
     """Return message digest if a secret key was provided"""
     try:
-        signature = request_headers.get('X-Hub-Signature').split('=', 1)[0]
+        signature = request_headers.get('X-Hub-Signature').split('=', 1)[1]
         digest = hmac.new(secret, request_data, hashlib.sha1).hexdigest()
         print("signature: %s, digest: %s" % (signature, digest))
         if signature == digest:
