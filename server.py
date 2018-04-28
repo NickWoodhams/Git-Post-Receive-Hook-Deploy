@@ -165,6 +165,9 @@ def autodeploy():
     print("Received message from %s" % request.remote_addr)
     pprint(request.json)
     pprint(request.headers)
+    signature = _get_header('X-Hub-Signature').split('=', 1)[0]
+    digest = hmac.new(app.config['GITHUB_HOOK_SECRET'], request.data, hashlib.sha1).hexdigest()
+    print(digest)
 
     if ip_allowed(request.remote_addr) or "secret" == app.config['GITHUB_HOOK_SECRET']:
         pprint(request.form)
