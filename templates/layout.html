@@ -34,7 +34,7 @@
             {% endfor %}
         {% endif %}
     {% endwith %}
-    {% if current_user.is_authenticated() %}
+    {% if current_user.is_authenticated %}
     <div class="container relative">
       <a class="logout" href="/logout">Logout</a>
     </div>
