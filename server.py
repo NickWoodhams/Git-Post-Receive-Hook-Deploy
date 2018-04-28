@@ -5,7 +5,9 @@
 
     autodeploy applications when pushed to git
 """
-
+import collections
+import hashlib
+import hmac
 import json
 import datetime
 
@@ -106,6 +108,12 @@ def git_provider(ip_address):
         return "bitbucket"
     else:
         return "github"
+
+
+def _get_digest(self):
+    """Return message digest if a secret key was provided"""
+    return hmac.new(
+        self._secret, request.data, hashlib.sha1).hexdigest() if self._secret else None
 
 
 # Create your login
