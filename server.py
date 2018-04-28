@@ -111,8 +111,8 @@ def git_provider(ip_address):
 @app.before_first_request
 def create_user():
     db.create_all()
-    user_datastore.create_user(email=app.config['ADMIN_EMAIL'], password=app.config['ADMIN_PASSWORD'])
     if not User.query.filter_by(email=app.config['ADMIN_EMAIL']).count():
+        user_datastore.create_user(email=app.config['ADMIN_EMAIL'], password=app.config['ADMIN_PASSWORD'])
         db.session.commit()
 
 
