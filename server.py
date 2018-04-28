@@ -115,6 +115,7 @@ def match_signature(request_headers, request_data, secret):
     try:
         signature = request_headers.get('X-Hub-Signature').split('=', 1)[0]
         digest = hmac.new(secret, request_data, hashlib.sha1).hexdigest()
+        print("signature: %s, digest: %s" % (signature, digest))
         if signature == digest:
             return True
         return False
