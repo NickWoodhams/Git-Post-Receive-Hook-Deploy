@@ -164,6 +164,7 @@ def edit_app(application_id):
 def autodeploy():
     print("Received message from %s" % request.remote_addr)
     pprint(request.json)
+    pprint(request.data)
 
     if ip_allowed(request.remote_addr) or "secret" == app.config['GITHUB_HOOK_SECRET']:
         pprint(request.form)
