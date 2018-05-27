@@ -64,6 +64,7 @@ class Application(db.Model):
     branch = db.Column(db.String(255))
     basepath = db.Column(db.String(255))
     touchpath = db.Column(db.String(255))
+    before_scriptpath = db.Column(db.String(255))
     scriptpath = db.Column(db.String(255))
     disabled = db.Column(db.Boolean, default=False)
     created_at = db.Column(db.DateTime, default=datetime.datetime.now())
@@ -80,7 +81,8 @@ class createEditApp(Form):
     branch = TextField('Branch Name', [Required()], description="Watch this branch for updates and pull changes.")
     basepath = TextField('Absolute Base Path', [Required()], description="Base path is the location of your application on the server. This is the root of your repository. Must be an absolute path.")
     touchpath = TextField('Touch this File Path', [Optional()], description="This file will be touched after the webhook is executed.")
-    scriptpath = TextField('Execute this Bash Script Path', [Optional()], description="This bash script will be executed after all other tasks are complete.")
+    before_scriptpath = TextField('Execute this Bash Script Path BEFORE checkout', [Optional()], description="This bash script will be executed before all other tasks are complete.")
+    scriptpath = TextField('Execute this Bash Script Path AFTER checkout', [Optional()], description="This bash script will be executed after all other tasks are complete.")
     disabled = BooleanField('Disable this hook?', [Optional()])
 
 
@@ -192,6 +194,10 @@ def autodeploy():
 
         application = Application.query.filter_by(name=name, branch=branch, disabled=False).first()
         if application:
+            if application.before_scriptpath:
+                # Run a script to wrap things up. Change permissions, send an email, whatever
+                Popen('bash %s' % application.before_scriptpath, shell=True)
+
             # Overwrite all files with current Git Version
             command = '''
                 cd %s
@@ -210,15 +216,15 @@ def autodeploy():
                 Popen('bash %s' % application.scriptpath, shell=True)
 
             status = 'Post-receive hook for %s triggered.' % repo['name']
-            print status
+            print(status)
             return jsonify(status=status)
         else:
             status = 'No active application hooks found'
-            print status
+            print(status)
             return jsonify(status=status)
     else:
         status = 'Bad IP source address. Only GitHub and BitBucket IP addresses allowed. Check "whitelist_ip_blocks."'
-        print status
+        print(status)
         return jsonify(status=status)
 
 
