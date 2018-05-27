@@ -194,9 +194,6 @@ def autodeploy():
 
         application = Application.query.filter_by(name=name, branch=branch, disabled=False).first()
         if application:
-            if application.before_scriptpath:
-                # Run a script to wrap things up. Change permissions, send an email, whatever
-                Popen('bash %s' % application.before_scriptpath, shell=True)
 
             # Overwrite all files with current Git Version
             command = '''
@@ -205,6 +202,10 @@ def autodeploy():
                 git reset --hard origin/%s
             ''' % (application.basepath, application.branch)
             Popen(command, shell=True)
+
+            if application.before_scriptpath:
+                # Run a script to wrap things up. Change permissions, send an email, whatever
+                Popen('bash %s' % application.before_scriptpath, shell=True)
 
             # Run optional commands if they are set
             if application.touchpath:
